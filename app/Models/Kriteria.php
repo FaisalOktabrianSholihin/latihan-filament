@@ -10,6 +10,7 @@ class Kriteria extends Model
     use HasFactory;
     protected $table = 'kriterias';
     protected $primaryKey = 'id_kriteria';
+    public $incrementing = false;
 
     protected $fillable = [
         'id_kriteria',

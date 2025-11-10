@@ -21,7 +21,8 @@ class Tc extends Model
         'id_komoditi',
         'id_budidaya',
         'tgl_tanam',
-        'luas_tanaman',
+        'luas_tanam',
+        'tdk_tc',
         'wilayah_tc',
     ];
 
@@ -41,7 +42,7 @@ class Tc extends Model
     // Relasi 1:M (One-to-Many) ke MonitorTC
     public function monitorTc()
     {
-        // tracecode merujuk ke tracecode
-        return $this->hasMany(MonitorTc::class, 'id_monitor_tc');
+        // Foreign key: id_tc di tabel monitor_tcs
+        return $this->hasMany(MonitorTc::class, 'id_tc', 'id_tc');
     }
 }

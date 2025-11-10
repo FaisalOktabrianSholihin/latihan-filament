@@ -10,15 +10,19 @@ class MstFasemonitor extends Model
     use HasFactory;
     protected $table = 'mst_fasemonitors';
     protected $primaryKey = 'id_monitor';
+    public $incrementing = false;
 
     protected $fillable = [
-
+        'id_monitor',
         'grub_fasemonitor',
         'fase_monitoring',
         'parameter',
         'titik_kritis',
         'monitoring_poin',
-        'keterangan', 
+        'bobot',
+        'keterangan',
+        'field1',
+        'field2',
     ];
 
     public function kriteria()
