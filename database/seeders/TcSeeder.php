@@ -17,83 +17,53 @@ class TcSeeder extends Seeder
         $tcs = [
             [
                 'id_tc' => 1,
-                'tracecode' => 'TC-2025-001',
-                'id_komoditi' => 101, // Padi
-                'id_budidaya' => 1, // Ahmad Hidayat
-                'tgl_tanam' => Carbon::parse('2025-01-15'),
-                'luas_tanam' => '2.5',
-                'tdk_tc' => 'TDK-001',
-                'wilayah_tc' => 'Blok A, Desa Sukamaju',
+                'tracecode' => '25C.307.18.A-0020',
+                'id_komoditi' => 18, // Chamame
+                'id_budidaya' => 6, // ABDUL HAMID
+                'tgl_tanam' => Carbon::parse('2025-10-14'),
+                'luas_tanam' => '6.3',
+                'tdk_tc' => '10C',
+                'wilayah_tc' => 'Jember',
             ],
             [
                 'id_tc' => 2,
-                'tracecode' => 'TC-2025-002',
-                'id_komoditi' => 102, // Jagung
-                'id_budidaya' => 2, // Budi Santoso
-                'tgl_tanam' => Carbon::parse('2025-02-01'),
-                'luas_tanam' => '3.0',
-                'tdk_tc' => 'TDK-002',
-                'wilayah_tc' => 'Blok B, Desa Makmur',
+                'tracecode' => '25C.023.01.A-0021',
+                'id_komoditi' => 1, // Edamamae
+                'id_budidaya' => 7, // DEDY WAHYUDI
+                'tgl_tanam' => Carbon::parse('2025-10-13'),
+                'luas_tanam' => '3.6',
+                'tdk_tc' => '10C',
+                'wilayah_tc' => 'Jember',
             ],
             [
                 'id_tc' => 3,
-                'tracecode' => 'TC-2025-003',
-                'id_komoditi' => 103, // Kedelai
-                'id_budidaya' => 3, // Citra Dewi
-                'tgl_tanam' => Carbon::parse('2025-02-10'),
-                'luas_tanam' => '1.5',
-                'tdk_tc' => 'TDK-003',
-                'wilayah_tc' => 'Blok C, Desa Sentosa',
+                'tracecode' => '25C.391.01.A-0022',
+                'id_komoditi' => 1, // Edamame
+                'id_budidaya' => 5, // NANANG PRIWAHYUDI
+                'tgl_tanam' => Carbon::parse('2025-10-16'),
+                'luas_tanam' => '0.8',
+                'tdk_tc' => '10C',
+                'wilayah_tc' => 'Jember',
             ],
             [
                 'id_tc' => 4,
-                'tracecode' => 'TC-2025-004',
-                'id_komoditi' => 104, // Cabai
-                'id_budidaya' => 4, // Dedi Kurniawan
-                'tgl_tanam' => Carbon::parse('2025-03-05'),
-                'luas_tanam' => '1.0',
-                'tdk_tc' => 'TDK-004',
-                'wilayah_tc' => 'Blok D, Desa Sejahtera',
+                'tracecode' => '25C.391.18.A-0023',
+                'id_komoditi' => 18, // Chamame
+                'id_budidaya' => 5, // NANANG PRIWAHYUDI
+                'tgl_tanam' => Carbon::parse('2025-10-17'),
+                'luas_tanam' => '4.3',
+                'tdk_tc' => '10C',
+                'wilayah_tc' => 'Jember',
             ],
             [
                 'id_tc' => 5,
-                'tracecode' => 'TC-2025-005',
-                'id_komoditi' => 105, // Bawang Merah
-                'id_budidaya' => 5, // Eka Putra
-                'tgl_tanam' => Carbon::parse('2025-03-20'),
-                'luas_tanam' => '0.8',
-                'tdk_tc' => 'TDK-005',
-                'wilayah_tc' => 'Blok E, Desa Maju',
-            ],
-            [
-                'id_tc' => 6,
-                'tracecode' => 'TC-2025-006',
-                'id_komoditi' => 106, // Tomat
-                'id_budidaya' => 1, // Ahmad Hidayat
-                'tgl_tanam' => Carbon::parse('2025-04-01'),
-                'luas_tanam' => '1.2',
-                'tdk_tc' => 'TDK-006',
-                'wilayah_tc' => 'Blok F, Desa Sukamaju',
-            ],
-            [
-                'id_tc' => 7,
-                'tracecode' => 'TC-2025-007',
-                'id_komoditi' => 101, // Padi
-                'id_budidaya' => 2, // Budi Santoso
-                'tgl_tanam' => Carbon::parse('2025-04-15'),
-                'luas_tanam' => '3.5',
-                'tdk_tc' => 'TDK-007',
-                'wilayah_tc' => 'Blok G, Desa Makmur',
-            ],
-            [
-                'id_tc' => 8,
-                'tracecode' => 'TC-2025-008',
-                'id_komoditi' => 102, // Jagung
-                'id_budidaya' => 3, // Citra Dewi
-                'tgl_tanam' => Carbon::parse('2025-05-01'),
-                'luas_tanam' => '2.8',
-                'tdk_tc' => 'TDK-008',
-                'wilayah_tc' => 'Blok H, Desa Sentosa',
+                'tracecode' => '25C.354.18.A-0024',
+                'id_komoditi' => 18, // Chamame
+                'id_budidaya' => 8, // GALIH JALUTAMA
+                'tgl_tanam' => Carbon::parse('2025-11-02'),
+                'luas_tanam' => '5.0',
+                'tdk_tc' => '11A',
+                'wilayah_tc' => 'Lumajang',
             ],
         ];
 

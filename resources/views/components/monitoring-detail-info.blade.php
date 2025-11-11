@@ -6,48 +6,52 @@
         <h2 class="text-sm font-semibold text-gray-700 tracking-wide">Informasi Trace Code</h2>
     </div>
     <div class="px-5 py-5">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div class="space-y-4">
-                <div class="group">
-                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Tanggal Tanam</p>
-                    @php($v = $data['tgl_tanam'] ?? '-')
-                    <p class="text-sm font-medium text-gray-900" title="{{ $v }}">{{ $v }}</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4">
+            {{-- Kolom kiri --}}
+            <div>
+                <div class="flex justify-between py-1 border-b border-gray-100">
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Tanggal Tanam : </span>
+                    <span class="text-sm font-medium text-gray-900">{{ $data['tgl_tanam'] ?? '-' }}</span>
                 </div>
-                <div class="group">
-                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Luas Tanam</p>
+
+                <div class="flex justify-between py-1 border-b border-gray-100">
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Luas Tanam : </span>
                     @php($luas = $data['luas_tanam'] ?? '-')
-                    <p class="text-sm font-medium text-gray-900" title="{{ $luas }}">{{ $luas }}
-                        @if ($luas !== '-')
-                            <span class="text-xs font-normal text-gray-500">Ha</span>
+                    <span class="text-sm font-medium text-gray-900">
+                        {{ $luas }} @if ($luas !== '-')
+                            <span class="text-xs text-gray-500">Ha</span>
                         @endif
-                    </p>
+                    </span>
                 </div>
-                <div class="group">
-                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">TDK TC</p>
-                    @php($v = $data['tdk_tc'] ?? '-')
-                    <p class="text-sm font-medium text-gray-900" title="{{ $v }}">{{ $v }}</p>
+
+                <div class="flex justify-between py-1 border-b border-gray-100">
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">TDK TC : </span>
+                    <span class="text-sm font-medium text-gray-900">{{ $data['tdk_tc'] ?? '-' }}</span>
                 </div>
             </div>
-            <div class="space-y-4">
-                <div class="group">
-                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Wilayah TC</p>
-                    @php($v = $data['wilayah_tc'] ?? '-')
-                    <p class="text-sm font-medium text-gray-900" title="{{ $v }}">{{ $v }}</p>
+
+            {{-- Kolom kanan --}}
+            <div>
+                <div class="flex justify-between py-1 border-b border-gray-100">
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Wilayah TC : </span>
+                    <span class="text-sm font-medium text-gray-900">{{ $data['wilayah_tc'] ?? '-' }}</span>
                 </div>
-                <div class="group">
-                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Komoditi</p>
-                    @php($v = $data['komoditi_name'] ?? '-')
-                    <p class="text-sm font-medium text-gray-900" title="{{ $v }}">{{ $v }}</p>
+
+                <div class="flex justify-between py-1 border-b border-gray-100">
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Komoditi : </span>
+                    <span class="text-sm font-medium text-gray-900">{{ $data['komoditi_name'] ?? '-' }}</span>
                 </div>
-                <div class="group">
-                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Budidaya</p>
-                    @php($v = $data['budidaya_name'] ?? '-')
-                    <p class="text-sm font-medium text-gray-900" title="{{ $v }}">{{ $v }}</p>
+
+                <div class="flex justify-between py-1 border-b border-gray-100">
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Budidaya : </span>
+                    {{-- //ini nama Asman --}}
+                    <span class="text-sm font-medium text-gray-900">{{ $data['budidaya_name'] ?? '-' }}</span>
                 </div>
-                <div class="group">
-                    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Asman / Manager</p>
-                    @php($v = $data['asman_manager'] ?? '-')
-                    <p class="text-sm font-medium text-gray-900" title="{{ $v }}">{{ $v }}</p>
+
+                <div class="flex justify-between py-1 border-b border-gray-100">
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Asman / Manager :
+                    </span>
+                    <span class="text-sm font-medium text-gray-900">{{ $data['asman_manager'] ?? '-' }}</span>
                 </div>
             </div>
         </div>

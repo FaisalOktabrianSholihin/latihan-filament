@@ -70,7 +70,7 @@
         <h3 class="text-sm font-bold text-gray-800 mb-2">🎯 Alur Monitoring Program</h3>
         <div class="text-sm text-gray-700 space-y-1">
             <p><span class="font-semibold text-blue-600">1.</span> Pilih <strong>Tanggal Monitoring</strong> dan
-                <strong>Kode Traceability</strong>
+                <strong>Tracecode</strong>
             </p>
             <p><span class="font-semibold text-blue-600">2.</span> Lihat informasi detail TC dan <strong>Tabel
                     Referensi</strong> di bawah</p>
