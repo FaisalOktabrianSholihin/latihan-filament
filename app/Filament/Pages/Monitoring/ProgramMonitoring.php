@@ -31,7 +31,7 @@ class ProgramMonitoring extends Page implements HasForms
 
     protected string $view = 'filament.pages.monitoring.program-monitoring';
 
-    protected static ?string $title = 'Program Monitoring Biaya dan Teknis Operasional';
+    protected static ?string $title = 'Program Monitoring';
 
     // Properties
     public ?array $data = [];
@@ -96,6 +96,7 @@ class ProgramMonitoring extends Page implements HasForms
                                         }
                                         // Reset all subsequent fields
                                         $set('fase_monitoring', null);
+                                        $set('id_monitor', null);
                                         $set('id_kriteria', null);
                                         $set('nilai_monitor', null);
                                         $set('evaluasi_monitoring', null);
@@ -119,6 +120,7 @@ class ProgramMonitoring extends Page implements HasForms
                     ->schema([
                         Grid::make(2)
                             ->schema([
+                                // ini buat pilih fase
                                 Select::make('fase_monitoring')
                                     ->label('Fase Monitoring')
                                     ->options(function () {
@@ -130,7 +132,15 @@ class ProgramMonitoring extends Page implements HasForms
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set, $livewire) {
-                                        $livewire->loadKriteriaByFase($state);
+                                        // $livewire->loadKriteriaByFase($state);
+                                        // $set('id_kriteria', null);
+                                        // $set('nilai_monitor', null);
+                                        // $set('evaluasi_monitoring', null);
+                                        $livewire->availableParameters = MstFasemonitor::where('fase_monitoring', $state)
+                                            ->pluck('parameter', 'id_monitor')
+                                            ->toArray();
+
+                                        $set('id_monitor', null);
                                         $set('id_kriteria', null);
                                         $set('nilai_monitor', null);
                                         $set('evaluasi_monitoring', null);
@@ -138,18 +148,74 @@ class ProgramMonitoring extends Page implements HasForms
                                     ->visible(fn($get) => !empty($get('trace_code')))
                                     ->columnSpan(1),
 
-                                Select::make('id_kriteria')
-                                    ->label('Kriteria Monitoring')
-                                    ->options(function () {
-                                        return collect($this->availableKriteria)->pluck('display_name', 'id_kriteria');
+                                // 2️⃣ Pilih Parameter
+                                // Select::make('id_monitor')
+                                //     ->label('Parameter')
+                                //     ->options(fn() => $this->availableParameters ?? [])
+                                //     ->required()
+                                //     ->live()
+                                //     ->afterStateUpdated(function ($state, $set, $livewire) {
+                                //         $livewire->loadKriteriaByMonitor($state);
+                                //         $set('id_kriteria', null);
+                                //         $set('nilai_monitor', null);
+                                //         $set('evaluasi_monitoring', null);
+                                //     })
+                                //     ->visible(fn($get) => !empty($get('fase_monitoring')))
+                                //     ->columnSpan(1),
+
+                                Select::make('id_monitor')
+                                    ->label('Parameter')
+                                    ->options(function ($get) {
+                                        // Jika sudah ada daftar parameter yang dimuat sebelumnya
+                                        if (!empty($this->availableParameters)) {
+                                            return $this->availableParameters;
+                                        }
+
+                                        // Jika tidak ada tapi sudah ada id_monitor yang terpilih
+                                        $selectedMonitor = $get('id_monitor');
+                                        if ($selectedMonitor) {
+                                            $monitor = \App\Models\MstFasemonitor::find($selectedMonitor);
+                                            if ($monitor) {
+                                                return [$monitor->id_monitor => $monitor->parameter];
+                                            }
+                                        }
+
+                                        // Default: kosong
+                                        return [];
                                     })
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set, $livewire) {
-                                        // Load existing data if any
-                                        $livewire->loadExistingMonitorData($state);
+                                        $livewire->loadKriteriaByMonitor($state);
+                                        $set('id_kriteria', null);
+                                        $set('nilai_monitor', null);
+                                        $set('evaluasi_monitoring', null);
                                     })
                                     ->visible(fn($get) => !empty($get('fase_monitoring')))
+                                    ->columnSpan(1),
+
+
+                                // pilih kriteria    
+                                // Select::make('id_kriteria')
+                                //     ->label('Kriteria Monitoring')
+                                //     ->options(function () {
+                                //         return collect($this->availableKriteria)->pluck('display_name', 'id_kriteria');
+                                //     })
+                                //     ->required()
+                                //     ->live()
+                                //     ->afterStateUpdated(function ($state, $set, $livewire) {
+                                //         // Load existing data if any
+                                //         $livewire->loadExistingMonitorData($state);
+                                //     })
+                                //     ->visible(fn($get) => !empty($get('fase_monitoring')))
+                                //     ->columnSpan(1),
+                                Select::make('id_kriteria')
+                                    ->label('Kriteria Monitoring')
+                                    ->options(fn() => collect($this->availableKriteria)->pluck('display_name', 'id_kriteria'))
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(fn($state, $set, $livewire) => $livewire->loadExistingMonitorData($state))
+                                    ->visible(fn($get) => !empty($get('id_monitor')))
                                     ->columnSpan(1),
                             ]),
 
@@ -186,6 +252,7 @@ class ProgramMonitoring extends Page implements HasForms
             'luas_tanam' => '-',
             'tdk_tc' => '-',
             'wilayah_tc' => '-',
+            'jumlah_bedeng' => '-',
             'komoditi_name' => '-',
             'budidaya_name' => '-',
             'asman_manager' => '-',
@@ -200,6 +267,7 @@ class ProgramMonitoring extends Page implements HasForms
                     'luas_tanam' => $tc->luas_tanam ?? '-',
                     'tdk_tc' => $tc->tdk_tc ?? '-',
                     'wilayah_tc' => $tc->wilayah_tc ?? '-',
+                    'jumlah_bedeng' => $tc->jumlah_bedeng ?? '-',
                     'komoditi_name' => $tc->komoditi->nm_komoditi ?? '-',
                     'budidaya_name' => $tc->budidaya->nm_asman_manager ?? '-',
                     'asman_manager' => $tc->budidaya->nm_asman_manager ?? '-',
@@ -265,12 +333,12 @@ class ProgramMonitoring extends Page implements HasForms
         // Coba pisahkan berdasarkan grub_fasemonitor jika ada
         $biayaData = $allData->filter(function ($item) {
             return stripos($item['grub_fasemonitor'] ?? '', 'biaya') !== false ||
-                   stripos($item['grub_fasemonitor'] ?? '', 'cost') !== false;
+                stripos($item['grub_fasemonitor'] ?? '', 'cost') !== false;
         });
 
         $teknisData = $allData->filter(function ($item) {
             return stripos($item['grub_fasemonitor'] ?? '', 'teknis') !== false ||
-                   stripos($item['grub_fasemonitor'] ?? '', 'technical') !== false;
+                stripos($item['grub_fasemonitor'] ?? '', 'technical') !== false;
         });
 
         // Jika tidak ada pembagian grup yang jelas, bagi manual
@@ -284,36 +352,63 @@ class ProgramMonitoring extends Page implements HasForms
         $this->teknisData = $teknisData->values()->toArray();
     }
 
-    public function loadKriteriaByFase($fase): void
+    // public function loadKriteriaByFase($fase): void
+    // {
+    //     $this->availableKriteria = [];
+
+    //     if (!$fase) {
+    //         return;
+    //     }
+
+    //     // Load kriteria berdasarkan fase monitoring
+    //     $monitors = MstFasemonitor::where('fase_monitoring', $fase)
+    //         ->with(['kriteria'])
+    //         ->get();
+
+    //     $kriteriaList = [];
+    //     foreach ($monitors as $monitor) {
+    //         foreach ($monitor->kriteria as $kriteria) {
+    //             $kriteriaList[] = [
+    //                 'id_kriteria' => $kriteria->id_kriteria,
+    //                 'id_monitor' => $monitor->id_monitor,
+    //                 'parameter' => $monitor->parameter,
+    //                 'monitoring_poin' => $monitor->monitoring_poin,
+    //                 'kriteria_name' => $kriteria->nm_kriteria,
+    //                 'kriteria_value' => $kriteria->nilai_kriteria,
+    //                 'display_name' => "{$monitor->parameter} - {$kriteria->nm_kriteria} ({$kriteria->nilai_kriteria})",
+    //             ];
+    //         }
+    //     }
+
+    //     $this->availableKriteria = $kriteriaList;
+    // }
+    public function loadKriteriaByMonitor($id_monitor): void
     {
         $this->availableKriteria = [];
 
-        if (!$fase) {
+        if (!$id_monitor) {
             return;
         }
 
-        // Load kriteria berdasarkan fase monitoring
-        $monitors = MstFasemonitor::where('fase_monitoring', $fase)
-            ->with(['kriteria'])
-            ->get();
+        $monitor = MstFasemonitor::with('kriteria')->find($id_monitor);
 
-        $kriteriaList = [];
-        foreach ($monitors as $monitor) {
-            foreach ($monitor->kriteria as $kriteria) {
-                $kriteriaList[] = [
-                    'id_kriteria' => $kriteria->id_kriteria,
-                    'id_monitor' => $monitor->id_monitor,
-                    'parameter' => $monitor->parameter,
-                    'monitoring_poin' => $monitor->monitoring_poin,
-                    'kriteria_name' => $kriteria->nm_kriteria,
-                    'kriteria_value' => $kriteria->nilai_kriteria,
-                    'display_name' => "{$monitor->parameter} - {$kriteria->nm_kriteria} ({$kriteria->nilai_kriteria})",
-                ];
-            }
+        if (!$monitor) {
+            return;
         }
 
-        $this->availableKriteria = $kriteriaList;
+        $this->availableKriteria = $monitor->kriteria->map(function ($kriteria) use ($monitor) {
+            return [
+                'id_kriteria' => $kriteria->id_kriteria,
+                'id_monitor' => $monitor->id_monitor,
+                'parameter' => $monitor->parameter,
+                'monitoring_poin' => $monitor->monitoring_poin,
+                'kriteria_name' => $kriteria->nm_kriteria,
+                'kriteria_value' => $kriteria->nilai_kriteria,
+                'display_name' => "{$monitor->parameter} - {$kriteria->nm_kriteria} ({$kriteria->nilai_kriteria})",
+            ];
+        })->toArray();
     }
+
 
     public function loadExistingMonitorData($kriteriaId): void
     {
@@ -347,7 +442,8 @@ class ProgramMonitoring extends Page implements HasForms
             $this->data['nilai_monitor'] = $existingData->nilai_monitor;
             $this->data['evaluasi_monitoring'] = $existingData->evalusi_monitoring;
         }
-    }    public function simpanData(): void
+    }
+    public function simpanData(): void
     {
         try {
             $data = $this->form->getState();
@@ -363,6 +459,11 @@ class ProgramMonitoring extends Page implements HasForms
 
             if (empty($data['fase_monitoring'])) {
                 Notification::make()->title('Fase Monitoring wajib diisi.')->danger()->send();
+                return;
+            }
+
+            if (empty($data['id_monitor'])) {
+                Notification::make()->title('Parameter Monitoring wajib dipilih.')->danger()->send();
                 return;
             }
 
@@ -396,6 +497,13 @@ class ProgramMonitoring extends Page implements HasForms
             $tc = Tc::where('tracecode', $traceCode)->first();
             if (!$tc) {
                 Notification::make()->title('Trace Code tidak ditemukan.')->danger()->send();
+                DB::rollBack();
+                return;
+            }
+
+            $monitor = MstFasemonitor::find($data['id_monitor']);
+            if (!$monitor) {
+                Notification::make()->title('Parameter Monitoring tidak ditemukan.')->danger()->send();
                 DB::rollBack();
                 return;
             }
@@ -467,7 +575,6 @@ class ProgramMonitoring extends Page implements HasForms
             $this->data['evaluasi_monitoring'] = null;
             $this->availableKriteria = [];
             $this->existingMonitorData = [];
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Gagal menyimpan data monitoring:', [

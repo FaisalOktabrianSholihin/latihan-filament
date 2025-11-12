@@ -24,6 +24,7 @@ class Tc extends Model
         'luas_tanam',
         'tdk_tc',
         'wilayah_tc',
+        'jumlah_bedeng',
     ];
 
     // Relasi 1:M (Many-to-One) ke Komoditi

@@ -38,6 +38,12 @@
                 </div>
 
                 <div class="flex justify-between py-1 border-b border-gray-100">
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Jumlah Bedeng :
+                    </span>
+                    <span class="text-sm font-medium text-gray-900">{{ $data['jumlah_bedeng'] ?? '-' }}</span>
+                </div>
+
+                <div class="flex justify-between py-1 border-b border-gray-100">
                     <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Komoditi : </span>
                     <span class="text-sm font-medium text-gray-900">{{ $data['komoditi_name'] ?? '-' }}</span>
                 </div>

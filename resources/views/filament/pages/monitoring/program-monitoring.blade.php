@@ -76,7 +76,8 @@
                     Referensi</strong> di bawah</p>
             <p><span class="font-semibold text-blue-600">3.</span> Pilih <strong>Fase Monitoring</strong> sesuai
                 kebutuhan</p>
-            <p><span class="font-semibold text-blue-600">4.</span> Pilih <strong>Kriteria Monitoring</strong> yang
+            <p><span class="font-semibold text-blue-600">4.</span> Pilih <strong>Parameter dan Kriteria
+                    Monitoring</strong> yang
                 tersedia</p>
             <p><span class="font-semibold text-blue-600">5.</span> Input <strong>Nilai Monitoring</strong> dan evaluasi
             </p>

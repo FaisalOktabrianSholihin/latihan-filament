@@ -28,6 +28,8 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->font('Poppins')
+            ->brandName('Pantau Tani')
             ->colors([
                 'primary' => Color::Amber,
             ])

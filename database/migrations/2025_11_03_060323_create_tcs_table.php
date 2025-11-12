@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('luas_tanam');
             $table->string('tdk_tc');
             $table->string('wilayah_tc');
+            $table->string('jumlah_bedeng');
             $table->timestamps();
         });
     }
