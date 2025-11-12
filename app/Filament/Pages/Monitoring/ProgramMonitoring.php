@@ -15,6 +15,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Actions\Action;
+use BackedEnum;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class ProgramMonitoring extends Page implements HasForms
     use InteractsWithForms;
 
     protected string $view = 'filament.pages.monitoring.program-monitoring';
-
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-computer-desktop';
     protected static ?string $title = 'Program Monitoring';
 
     // Properties
