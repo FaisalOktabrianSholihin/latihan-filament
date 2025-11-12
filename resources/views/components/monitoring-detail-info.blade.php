@@ -49,16 +49,16 @@
                 </div>
 
                 <div class="flex justify-between py-1 border-b border-gray-100">
-                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Budidaya : </span>
-                    {{-- //ini nama Asman --}}
-                    <span class="text-sm font-medium text-gray-900">{{ $data['budidaya_name'] ?? '-' }}</span>
+                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Manager : </span>
+                    <span class="text-sm font-medium text-gray-900">{{ $data['manager_name'] ?? '-' }}</span>
                 </div>
 
-                <div class="flex justify-between py-1 border-b border-gray-100">
-                    <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Asman / Manager :
-                    </span>
-                    <span class="text-sm font-medium text-gray-900">{{ $data['asman_manager'] ?? '-' }}</span>
-                </div>
+                @if (!($data['is_manager'] ?? false))
+                    <div class="flex justify-between py-1 border-b border-gray-100">
+                        <span class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Asman : </span>
+                        <span class="text-sm font-medium text-gray-900">{{ $data['asman_name'] ?? '-' }}</span>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

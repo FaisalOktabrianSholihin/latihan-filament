@@ -3,24 +3,31 @@
 namespace App\Filament\Widgets;
 
 use App\Models\MstFasemonitor;
+use App\Models\Tc;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 
-class RankingTitikKritis extends BaseWidget
+class MonitoringTeknisTable extends BaseWidget
 {
-    protected static ?string $heading = 'Ranking Titik Kritis';
+    protected static ?string $heading = 'Monitoring Teknis';
 
     protected int | string | array $columnSpan = 'full';
 
+    public ?string $traceCode = null;
+
     protected function getTableQuery(): Builder
     {
+        if (!$this->traceCode) {
+            return MstFasemonitor::query()->whereRaw('1 = 0');
+        }
+
         return MstFasemonitor::query()
-            ->with('kriteria')
-            ->whereNotNull('titik_kritis')
-            ->where('titik_kritis', '!=', '')
-            ->orderByDesc('fase_monitoring');
+            ->with(['kriteria'])
+            ->where('grub_fasemonitor', 'Teknis')
+            ->orderBy('fase_monitoring')
+            ->orderBy('parameter');
     }
 
     public function table(Table $table): Table
@@ -32,8 +39,8 @@ class RankingTitikKritis extends BaseWidget
                     ->label('Fase Monitoring')
                     ->badge()
                     ->color('primary')
-                    ->sortable()
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('parameter')
                     ->label('Parameter')
                     ->searchable()
@@ -44,41 +51,36 @@ class RankingTitikKritis extends BaseWidget
                     ->searchable()
                     ->wrap()
                     ->badge()
-                    ->color('warning'),
+                    ->color('warning')
+                    ->default('-')
+                    ->placeholder('Tidak ada'),
                 Tables\Columns\TextColumn::make('monitoring_poin')
                     ->label('Monitoring Poin')
                     ->searchable()
                     ->wrap()
-                    ->limit(50)
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('grub_fasemonitor')
-                    ->label('Grup')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Biaya' => 'success',
-                        'Teknis' => 'info',
-                        default => 'gray',
-                    })
-                    ->sortable(),
+                    ->limit(50),
                 Tables\Columns\TextColumn::make('kriteria_count')
                     ->label('Jumlah Kriteria')
                     ->counts('kriteria')
                     ->badge()
                     ->color('success')
                     ->alignCenter(),
+                Tables\Columns\TextColumn::make('grub_fasemonitor')
+                    ->label('Grup')
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Dibuat')
+                    ->dateTime('d/m/Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('grub_fasemonitor')
-                    ->label('Grup Monitoring')
-                    ->options([
-                        'Biaya' => 'Biaya',
-                        'Teknis' => 'Teknis',
-                    ]),
                 Tables\Filters\SelectFilter::make('fase_monitoring')
                     ->label('Fase Monitoring')
                     ->options(function () {
-                        return MstFasemonitor::whereNotNull('titik_kritis')
-                            ->where('titik_kritis', '!=', '')
+                        return MstFasemonitor::where('grub_fasemonitor', 'Teknis')
                             ->distinct()
                             ->pluck('fase_monitoring', 'fase_monitoring');
                     })
@@ -86,6 +88,17 @@ class RankingTitikKritis extends BaseWidget
             ])
             ->defaultSort('fase_monitoring', 'asc')
             ->striped()
-            ->paginated([10, 25, 50]);
+            ->paginated([10, 25, 50])
+            ->poll('60s');
+    }
+
+    protected function getTableHeading(): ?string
+    {
+        return 'Monitoring Teknis - ' . ($this->traceCode ?? 'All');
+    }
+
+    protected function getTableDescription(): ?string
+    {
+        return 'Daftar parameter monitoring untuk aspek teknis.';
     }
 }

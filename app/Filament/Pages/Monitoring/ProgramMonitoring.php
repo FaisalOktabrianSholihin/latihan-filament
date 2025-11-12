@@ -42,11 +42,113 @@ class ProgramMonitoring extends Page implements HasForms
     public array $availableKriteria = [];
     public array $existingMonitorData = [];
     public array $progressData = [];
+    public ?string $selectedTraceCode = null;
 
     public function mount(): void
     {
         $this->form->fill();
         $this->loadProgressData();
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [];
+    }
+
+    protected function getListeners(): array
+    {
+        return [
+            'export-history-data' => 'exportHistoryData',
+        ];
+    }
+
+    public function exportHistoryData()
+    {
+        if (!$this->selectedTraceCode) {
+            Notification::make()
+                ->warning()
+                ->title('Trace Code belum dipilih')
+                ->body('Silakan pilih Trace Code terlebih dahulu.')
+                ->send();
+            return;
+        }
+
+        $tc = Tc::where('tracecode', $this->selectedTraceCode)->first();
+
+        if (!$tc) {
+            Notification::make()
+                ->danger()
+                ->title('Trace Code tidak ditemukan')
+                ->send();
+            return;
+        }
+
+        $records = MonitorTc::where('id_tc', $tc->id_tc)
+            ->with(['kriteria.mstfasemonitoring', 'user', 'tc'])
+            ->orderBy('tgl_monitoring', 'desc')
+            ->get();
+
+        $filename = 'history-monitoring-' . $this->selectedTraceCode . '-' . now()->format('Y-m-d-His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function() use ($records) {
+            $file = fopen('php://output', 'w');
+
+            // Add BOM for UTF-8
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Add headers
+            fputcsv($file, [
+                'Trace Code',
+                'Tanggal Monitoring',
+                'Fase Monitoring',
+                'Parameter',
+                'Kriteria',
+                'Nilai Kriteria',
+                'Nilai Monitor',
+                'Evaluasi',
+                'User',
+                'Tanggal Update',
+            ]);
+
+            // Add data
+            foreach ($records as $record) {
+                fputcsv($file, [
+                    $record->tc->tracecode ?? '-',
+                    $record->tgl_monitoring ? \Carbon\Carbon::parse($record->tgl_monitoring)->format('d/m/Y H:i') : '-',
+                    $record->kriteria->mstfasemonitoring->fase_monitoring ?? '-',
+                    $record->kriteria->mstfasemonitoring->parameter ?? '-',
+                    $record->kriteria->nm_kriteria ?? '-',
+                    $record->kriteria->nilai_kriteria ?? '-',
+                    $record->nilai_monitor,
+                    $record->evalusi_monitoring ?? '-',
+                    $record->user->name ?? 'System',
+                    $record->tgl_update ? \Carbon\Carbon::parse($record->tgl_update)->format('d/m/Y H:i') : '-',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return \Illuminate\Support\Facades\Response::stream($callback, 200, $headers);
+    }
+
+    public function getHistoryWidget()
+    {
+        if (!$this->selectedTraceCode) {
+            return null;
+        }
+
+        $widget = app(\App\Filament\Widgets\HistoryMonitoringTable::class);
+        $widget->traceCode = $this->selectedTraceCode;
+        return $widget;
     }
 
     public function loadProgressData(): void
@@ -196,7 +298,7 @@ class ProgramMonitoring extends Page implements HasForms
                                     ->columnSpan(1),
 
 
-                                // pilih kriteria    
+                                // pilih kriteria
                                 // Select::make('id_kriteria')
                                 //     ->label('Kriteria Monitoring')
                                 //     ->options(function () {
@@ -247,6 +349,9 @@ class ProgramMonitoring extends Page implements HasForms
     {
         $traceCode = $this->data['trace_code'] ?? null;
 
+        // Set selected trace code for widget
+        $this->selectedTraceCode = $traceCode;
+
         // Initialize default values
         $this->traceCodeDetail = [
             'tgl_tanam' => '-',
@@ -255,14 +360,20 @@ class ProgramMonitoring extends Page implements HasForms
             'wilayah_tc' => '-',
             'jumlah_bedeng' => '-',
             'komoditi_name' => '-',
-            'budidaya_name' => '-',
-            'asman_manager' => '-',
+            'is_manager' => false,
+            'manager_name' => '-',
+            'asman_name' => '-',
         ];
 
         if ($traceCode) {
             $tc = Tc::with(['komoditi', 'budidaya'])->where('tracecode', $traceCode)->first();
 
-            if ($tc) {
+            if ($tc && $tc->budidaya) {
+                $budidaya = $tc->budidaya;
+
+                // Cek apakah ini Manager (id_atasan null) atau Asman (id_atasan ada)
+                $isManager = is_null($budidaya->id_atasan);
+
                 $this->traceCodeDetail = [
                     'tgl_tanam' => $tc->tgl_tanam ? \Carbon\Carbon::parse($tc->tgl_tanam)->format('d/m/Y') : '-',
                     'luas_tanam' => $tc->luas_tanam ?? '-',
@@ -270,8 +381,11 @@ class ProgramMonitoring extends Page implements HasForms
                     'wilayah_tc' => $tc->wilayah_tc ?? '-',
                     'jumlah_bedeng' => $tc->jumlah_bedeng ?? '-',
                     'komoditi_name' => $tc->komoditi->nm_komoditi ?? '-',
-                    'budidaya_name' => $tc->budidaya->nm_asman_manager ?? '-',
-                    'asman_manager' => $tc->budidaya->nm_asman_manager ?? '-',
+                    'is_manager' => $isManager,
+                    // Jika Manager: tampilkan nama manager, jika Asman: tampilkan nama atasan (manager)
+                    'manager_name' => $isManager ? ($budidaya->nm_asman_manager ?? '-') : ($budidaya->nama_atasan ?? '-'),
+                    // Jika Manager: null (tidak ditampilkan), jika Asman: tampilkan nama asman
+                    'asman_name' => $isManager ? null : ($budidaya->nm_asman_manager ?? '-'),
                 ];
             }
         }
