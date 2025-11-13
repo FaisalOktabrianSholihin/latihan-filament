@@ -25,6 +25,7 @@ class Tc extends Model
         'tdk_tc',
         'wilayah_tc',
         'jumlah_bedeng',
+        'status',
     ];
 
     // Relasi 1:M (Many-to-One) ke Komoditi

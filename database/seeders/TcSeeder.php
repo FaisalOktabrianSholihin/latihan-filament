@@ -25,6 +25,7 @@ class TcSeeder extends Seeder
                 'tdk_tc' => '10C',
                 'wilayah_tc' => 'Jember',
                 'jumlah_bedeng' => '10',
+                'status' => 'belum',
             ],
             [
                 'id_tc' => 2,
@@ -36,6 +37,7 @@ class TcSeeder extends Seeder
                 'tdk_tc' => '10C',
                 'wilayah_tc' => 'Jember',
                 'jumlah_bedeng' => '4',
+                'status' => 'belum',
             ],
             [
                 'id_tc' => 3,
@@ -47,6 +49,7 @@ class TcSeeder extends Seeder
                 'tdk_tc' => '10C',
                 'wilayah_tc' => 'Jember',
                 'jumlah_bedeng' => '11',
+                'status' => 'belum',
             ],
             [
                 'id_tc' => 4,
@@ -58,6 +61,7 @@ class TcSeeder extends Seeder
                 'tdk_tc' => '10C',
                 'wilayah_tc' => 'Jember',
                 'jumlah_bedeng' => '12',
+                'status' => 'belum',
             ],
             [
                 'id_tc' => 5,
@@ -69,6 +73,7 @@ class TcSeeder extends Seeder
                 'tdk_tc' => '11A',
                 'wilayah_tc' => 'Lumajang',
                 'jumlah_bedeng' => '3',
+                'status' => 'belum',
             ],
         ];
 

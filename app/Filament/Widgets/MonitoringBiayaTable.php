@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\MstFasemonitor;
+use App\Models\MonitorTc;
 use App\Models\Tc;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -13,21 +14,35 @@ class MonitoringBiayaTable extends BaseWidget
 {
     protected static ?string $heading = 'Monitoring Biaya';
 
+    protected static bool $isDiscovered = false;
+
     protected int | string | array $columnSpan = 'full';
 
     public ?string $traceCode = null;
 
+    protected $listeners = ['refreshMonitoringBiaya' => '$refresh'];
+
     protected function getTableQuery(): Builder
     {
         if (!$this->traceCode) {
-            return MstFasemonitor::query()->whereRaw('1 = 0');
+            return MonitorTc::query()->whereRaw('1 = 0');
         }
 
-        return MstFasemonitor::query()
-            ->with(['kriteria'])
-            ->where('grub_fasemonitor', 'Biaya')
-            ->orderBy('fase_monitoring')
-            ->orderBy('parameter');
+        $tc = Tc::where('tracecode', $this->traceCode)->first();
+
+        if (!$tc) {
+            return MonitorTc::query()->whereRaw('1 = 0');
+        }
+
+        // Ambil ID monitor untuk grup Biaya
+        $biayaMonitorIds = MstFasemonitor::where('grub_fasemonitor', 'Biaya')
+            ->pluck('id_monitor');
+
+        return MonitorTc::query()
+            ->with(['fasemonitoring', 'kriteria', 'user'])
+            ->where('id_tc', $tc->id_tc)
+            ->whereIn('id_monitor', $biayaMonitorIds)
+            ->orderBy('tgl_monitoring', 'desc');
     }
 
     public function table(Table $table): Table
@@ -35,46 +50,56 @@ class MonitoringBiayaTable extends BaseWidget
         return $table
             ->query($this->getTableQuery())
             ->columns([
-                Tables\Columns\TextColumn::make('fase_monitoring')
+                Tables\Columns\TextColumn::make('fasemonitoring.fase_monitoring')
                     ->label('Fase Monitoring')
                     ->badge()
                     ->color('info')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('parameter')
+                Tables\Columns\TextColumn::make('fasemonitoring.parameter')
                     ->label('Parameter')
                     ->searchable()
                     ->wrap()
                     ->weight('medium'),
-                Tables\Columns\TextColumn::make('titik_kritis')
-                    ->label('Titik Kritis')
+                Tables\Columns\TextColumn::make('kriteria.nm_kriteria')
+                    ->label('Kriteria')
                     ->searchable()
                     ->wrap()
-                    ->badge()
-                    ->color('warning')
-                    ->default('-')
-                    ->placeholder('Tidak ada'),
-                Tables\Columns\TextColumn::make('monitoring_poin')
-                    ->label('Monitoring Poin')
-                    ->searchable()
-                    ->wrap()
-                    ->limit(50),
-                Tables\Columns\TextColumn::make('kriteria_count')
-                    ->label('Jumlah Kriteria')
-                    ->counts('kriteria')
+                    ->placeholder('Belum diisi')
+                    ->default('-'),
+                Tables\Columns\TextColumn::make('kriteria.nilai_kriteria')
+                    ->label('Nilai Kriteria')
+                    ->alignCenter()
                     ->badge()
                     ->color('success')
-                    ->alignCenter(),
-                Tables\Columns\TextColumn::make('grub_fasemonitor')
-                    ->label('Grup')
+                    ->placeholder('-')
+                    ->default('-'),
+                Tables\Columns\TextColumn::make('nilai_monitor')
+                    ->label('Nilai Monitor')
+                    ->alignCenter()
                     ->badge()
                     ->color('primary')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d/m/Y')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->placeholder('-')
+                    ->default('-')
+                    ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 2) : '-'),
+                Tables\Columns\TextColumn::make('evalusi_monitoring')
+                    ->label('Evaluasi')
+                    ->wrap()
+                    ->limit(50)
+                    ->placeholder('-')
+                    ->default('-'),
+                Tables\Columns\TextColumn::make('tgl_monitoring')
+                    ->label('Tanggal Monitoring')
+                    ->date('d/m/Y')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('hasil')
+                    ->label('Hasil Fase')
+                    ->alignCenter()
+                    ->badge()
+                    ->color('warning')
+                    ->placeholder('-')
+                    ->default('-')
+                    ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 2) : '-'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('fase_monitoring')
@@ -86,10 +111,89 @@ class MonitoringBiayaTable extends BaseWidget
                     })
                     ->searchable(),
             ])
-            ->defaultSort('fase_monitoring', 'asc')
+            ->defaultSort('tgl_monitoring', 'desc')
             ->striped()
-            ->paginated([10, 25, 50])
+            ->paginated([10, 25, 50, 100])
             ->poll('60s');
+    }
+
+    public function exportToExcel()
+    {
+        if (!$this->traceCode) {
+            return null;
+        }
+
+        $tc = Tc::where('tracecode', $this->traceCode)->first();
+
+        if (!$tc) {
+            return null;
+        }
+
+        $biayaMonitorIds = MstFasemonitor::where('grub_fasemonitor', 'Biaya')
+            ->pluck('id_monitor');
+
+        $records = MonitorTc::where('id_tc', $tc->id_tc)
+            ->whereIn('id_monitor', $biayaMonitorIds)
+            ->with(['fasemonitoring', 'kriteria', 'user'])
+            ->orderBy('tgl_monitoring', 'desc')
+            ->get();
+
+        $filename = 'monitoring-biaya-' . $this->traceCode . '-' . now()->format('Y-m-d-His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function() use ($records) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, [
+                'Trace Code',
+                'Fase Monitoring',
+                'Parameter',
+                'Kriteria',
+                'Nilai Kriteria',
+                'Nilai Monitor',
+                'Evaluasi',
+                'Hasil Fase',
+                'Tanggal Monitoring',
+                'User',
+            ]);
+
+            foreach ($records as $record) {
+                fputcsv($file, [
+                    $this->traceCode,
+                    $record->fasemonitoring->fase_monitoring ?? '-',
+                    $record->fasemonitoring->parameter ?? '-',
+                    $record->kriteria->nm_kriteria ?? '-',
+                    $record->kriteria->nilai_kriteria ?? '-',
+                    $record->nilai_monitor ?? '-',
+                    $record->evalusi_monitoring ?? '-',
+                    $record->hasil ?? '-',
+                    $record->tgl_monitoring ? \Carbon\Carbon::parse($record->tgl_monitoring)->format('d/m/Y') : '-',
+                    $record->user->name ?? 'System',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return \Illuminate\Support\Facades\Response::stream($callback, 200, $headers);
+    }
+
+    public function exportToPdf()
+    {
+        // PDF export akan diimplementasikan sesuai desain yang dikirim
+        \Filament\Notifications\Notification::make()
+            ->title('Export PDF')
+            ->body('Fitur export PDF dalam pengembangan. Desain akan disesuaikan dengan template yang diberikan.')
+            ->info()
+            ->send();
     }
 
     protected function getTableHeading(): ?string
@@ -99,6 +203,6 @@ class MonitoringBiayaTable extends BaseWidget
 
     protected function getTableDescription(): ?string
     {
-        return 'Daftar parameter monitoring untuk aspek biaya.';
+        return 'Daftar data monitoring untuk aspek biaya yang telah diinput.';
     }
 }

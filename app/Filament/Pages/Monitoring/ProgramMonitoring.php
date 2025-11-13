@@ -58,97 +58,79 @@ class ProgramMonitoring extends Page implements HasForms
     protected function getListeners(): array
     {
         return [
-            'export-history-data' => 'exportHistoryData',
+            'export-biaya-excel' => 'exportBiayaExcel',
+            'export-teknis-excel' => 'exportTeknisExcel',
+            'export-monitoring-pdf' => 'exportMonitoringPdf',
         ];
     }
 
-    public function exportHistoryData()
+    public function exportBiayaExcel()
     {
         if (!$this->selectedTraceCode) {
-            Notification::make()
-                ->warning()
-                ->title('Trace Code belum dipilih')
-                ->body('Silakan pilih Trace Code terlebih dahulu.')
-                ->send();
+            Notification::make()->warning()->title('Trace Code belum dipilih')->send();
             return;
         }
 
-        $tc = Tc::where('tracecode', $this->selectedTraceCode)->first();
+        $widget = app(\App\Filament\Widgets\MonitoringBiayaTable::class);
+        $widget->traceCode = $this->selectedTraceCode;
+        return $widget->exportToExcel();
+    }
+
+    public function exportMonitoringPdf()
+    {
+        if (!$this->selectedTraceCode) {
+            Notification::make()->warning()->title('Trace Code belum dipilih')->send();
+            return;
+        }
+
+        $tc = Tc::with(['komoditi', 'budidaya'])->where('tracecode', $this->selectedTraceCode)->first();
 
         if (!$tc) {
-            Notification::make()
-                ->danger()
-                ->title('Trace Code tidak ditemukan')
-                ->send();
+            Notification::make()->warning()->title('Data TC tidak ditemukan')->send();
             return;
         }
 
-        $records = MonitorTc::where('id_tc', $tc->id_tc)
-            ->with(['kriteria.mstfasemonitoring', 'user', 'tc'])
-            ->orderBy('tgl_monitoring', 'desc')
+        // Ambil data Biaya
+        $dataBiaya = MonitorTc::with(['fasemonitoring', 'kriteria'])
+            ->where('id_tc', $tc->id_tc)
+            ->whereHas('fasemonitoring', function($query) {
+                $query->where('grub_fasemonitor', 'Biaya');
+            })
+            ->whereNotNull('nilai_monitor')
+            ->orderBy('id_monitor')
             ->get();
 
-        $filename = 'history-monitoring-' . $this->selectedTraceCode . '-' . now()->format('Y-m-d-His') . '.csv';
+        // Ambil data Teknis
+        $dataTeknis = MonitorTc::with(['fasemonitoring', 'kriteria'])
+            ->where('id_tc', $tc->id_tc)
+            ->whereHas('fasemonitoring', function($query) {
+                $query->where('grub_fasemonitor', 'Teknis');
+            })
+            ->whereNotNull('nilai_monitor')
+            ->orderBy('id_monitor')
+            ->get();
 
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0',
-        ];
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.laporan-monitoring', [
+            'tc' => $tc,
+            'dataBiaya' => $dataBiaya,
+            'dataTeknis' => $dataTeknis
+        ]);
 
-        $callback = function() use ($records) {
-            $file = fopen('php://output', 'w');
-
-            // Add BOM for UTF-8
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-
-            // Add headers
-            fputcsv($file, [
-                'Trace Code',
-                'Tanggal Monitoring',
-                'Fase Monitoring',
-                'Parameter',
-                'Kriteria',
-                'Nilai Kriteria',
-                'Nilai Monitor',
-                'Evaluasi',
-                'User',
-                'Tanggal Update',
-            ]);
-
-            // Add data
-            foreach ($records as $record) {
-                fputcsv($file, [
-                    $record->tc->tracecode ?? '-',
-                    $record->tgl_monitoring ? \Carbon\Carbon::parse($record->tgl_monitoring)->format('d/m/Y H:i') : '-',
-                    $record->kriteria->mstfasemonitoring->fase_monitoring ?? '-',
-                    $record->kriteria->mstfasemonitoring->parameter ?? '-',
-                    $record->kriteria->nm_kriteria ?? '-',
-                    $record->kriteria->nilai_kriteria ?? '-',
-                    $record->nilai_monitor,
-                    $record->evalusi_monitoring ?? '-',
-                    $record->user->name ?? 'System',
-                    $record->tgl_update ? \Carbon\Carbon::parse($record->tgl_update)->format('d/m/Y H:i') : '-',
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return \Illuminate\Support\Facades\Response::stream($callback, 200, $headers);
+        return response()->streamDownload(function() use ($pdf) {
+            echo $pdf->output();
+        }, 'Laporan-Monitoring-' . $this->selectedTraceCode . '.pdf');
     }
 
-    public function getHistoryWidget()
+    public function exportTeknisExcel()
     {
         if (!$this->selectedTraceCode) {
-            return null;
+            Notification::make()->warning()->title('Trace Code belum dipilih')->send();
+            return;
         }
 
-        $widget = app(\App\Filament\Widgets\HistoryMonitoringTable::class);
+        $widget = app(\App\Filament\Widgets\MonitoringTeknisTable::class);
         $widget->traceCode = $this->selectedTraceCode;
-        return $widget;
+        return $widget->exportToExcel();
     }
 
     public function loadProgressData(): void
@@ -190,6 +172,7 @@ class ProgramMonitoring extends Page implements HasForms
                                     ->afterStateUpdated(function ($state, $set, $livewire) {
                                         if ($state) {
                                             $livewire->loadTraceCodeDetail();
+                                            $livewire->generateMonitoringRecords($state);
                                             $livewire->loadMonitoringReferenceData();
                                         } else {
                                             $livewire->traceCodeDetail = null;
@@ -269,29 +252,21 @@ class ProgramMonitoring extends Page implements HasForms
                                 Select::make('id_monitor')
                                     ->label('Parameter')
                                     ->options(function ($get) {
-                                        // Jika sudah ada daftar parameter yang dimuat sebelumnya
-                                        if (!empty($this->availableParameters)) {
-                                            return $this->availableParameters;
+                                        // Selalu tampilkan semua parameter dari fase yang dipilih
+                                        $fase = $get('fase_monitoring');
+                                        if (!$fase) {
+                                            return [];
                                         }
 
-                                        // Jika tidak ada tapi sudah ada id_monitor yang terpilih
-                                        $selectedMonitor = $get('id_monitor');
-                                        if ($selectedMonitor) {
-                                            $monitor = \App\Models\MstFasemonitor::find($selectedMonitor);
-                                            if ($monitor) {
-                                                return [$monitor->id_monitor => $monitor->parameter];
-                                            }
-                                        }
-
-                                        // Default: kosong
-                                        return [];
+                                        return MstFasemonitor::where('fase_monitoring', $fase)
+                                            ->pluck('parameter', 'id_monitor')
+                                            ->toArray();
                                     })
                                     ->required()
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set, $livewire) {
                                         $livewire->loadKriteriaByMonitor($state);
                                         $set('id_kriteria', null);
-                                        $set('nilai_monitor', null);
                                         $set('evaluasi_monitoring', null);
                                     })
                                     ->visible(fn($get) => !empty($get('fase_monitoring')))
@@ -322,16 +297,8 @@ class ProgramMonitoring extends Page implements HasForms
                                     ->columnSpan(1),
                             ]),
 
-                        Grid::make(2)
+                        Grid::make(1)
                             ->schema([
-                                TextInput::make('nilai_monitor')
-                                    ->label('Nilai Monitoring')
-                                    ->numeric()
-                                    ->required()
-                                    ->placeholder('Masukkan nilai monitoring')
-                                    ->visible(fn($get) => !empty($get('id_kriteria')))
-                                    ->columnSpan(1),
-
                                 Textarea::make('evaluasi_monitoring')
                                     ->label('Evaluasi / Catatan')
                                     ->placeholder('Tambahkan catatan evaluasi (opsional)')
@@ -388,6 +355,92 @@ class ProgramMonitoring extends Page implements HasForms
                     'asman_name' => $isManager ? null : ($budidaya->nm_asman_manager ?? '-'),
                 ];
             }
+        }
+    }
+
+    /**
+     * Generate 35 records monitoring saat pertama kali memilih TC
+     * Status TC berubah dari "belum" ke "sudah"
+     */
+    public function generateMonitoringRecords($traceCode): void
+    {
+        try {
+            // Cari TC berdasarkan trace code
+            $tc = Tc::where('tracecode', $traceCode)->first();
+
+            if (!$tc) {
+                return;
+            }
+
+            // Cek apakah sudah pernah di-generate (status sudah)
+            if ($tc->status === 'sudah') {
+                // Sudah pernah di-generate, tidak perlu generate lagi
+                return;
+            }
+
+            DB::beginTransaction();
+
+            // Ambil semua fase monitoring (35 parameter)
+            $allMonitors = MstFasemonitor::with('kriteria')->get();
+
+            if ($allMonitors->isEmpty()) {
+                DB::rollBack();
+                return;
+            }
+
+            $userId = Auth::id() ?? 1;
+            $tglMonitoring = now()->format('Y-m-d');
+
+            // Generate record untuk setiap fase monitoring
+            foreach ($allMonitors as $monitor) {
+                // Generate unique ID
+                $newId = (int) (now()->format('YmdHis') . rand(1000, 9999));
+                while (MonitorTc::find($newId)) {
+                    $newId = (int) (now()->format('YmdHis') . rand(1000, 9999));
+                }
+
+                // Buat record monitoring dengan nilai kosong
+                MonitorTc::create([
+                    'id_monitor_tc' => $newId,
+                    'id_user' => $userId,
+                    'id_tc' => $tc->id_tc,
+                    'id_kriteria' => null, // Kosong, akan diisi saat monitoring
+                    'id_monitor' => $monitor->id_monitor,
+                    'nilai_monitor' => null, // Kosong, akan diisi saat monitoring
+                    'evalusi_monitoring' => null,
+                    'tgl_monitoring' => $tglMonitoring,
+                    'ket_monitor' => null,
+                    'tgl_update' => now()->format('Y-m-d'),
+                    'hasil' => null,
+                ]);
+
+                // Small delay to ensure unique timestamp
+                usleep(1000);
+            }
+
+            // Update status TC menjadi "sudah"
+            $tc->update(['status' => 'sudah']);
+
+            DB::commit();
+
+            Notification::make()
+                ->title('Monitoring Records Generated')
+                ->body('35 fase monitoring telah dibuat untuk TC: ' . $traceCode)
+                ->success()
+                ->send();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to generate monitoring records:', [
+                'error' => $e->getMessage(),
+                'trace_code' => $traceCode,
+            ]);
+
+            Notification::make()
+                ->title('Gagal Generate Monitoring')
+                ->body('Error: ' . $e->getMessage())
+                ->danger()
+                ->send();
         }
     }
 
@@ -587,11 +640,6 @@ class ProgramMonitoring extends Page implements HasForms
                 return;
             }
 
-            if (empty($data['nilai_monitor'])) {
-                Notification::make()->title('Nilai Monitoring wajib diisi.')->danger()->send();
-                return;
-            }
-
             DB::beginTransaction();
 
             $traceCode = $data['trace_code'];
@@ -631,17 +679,30 @@ class ProgramMonitoring extends Page implements HasForms
                 return;
             }
 
-            // Cek apakah sudah ada data monitoring untuk kombinasi ini pada tanggal yang sama
+            // HITUNG NILAI_MONITOR: bobot (dari mst_fasemonitor) × nilai_kriteria (dari kriteria)
+            // Convert to float untuk memastikan perhitungan numerik yang benar
+            $bobot = floatval($monitor->bobot ?? 0);
+            $nilaiKriteria = floatval($kriteria->nilai_kriteria ?? 0);
+            $nilaiMonitor = $bobot * $nilaiKriteria;
+
+            Log::info('Calculating nilai_monitor:', [
+                'bobot' => $bobot,
+                'nilai_kriteria' => $nilaiKriteria,
+                'nilai_monitor' => $nilaiMonitor,
+            ]);
+
+            // Cek apakah sudah ada data monitoring untuk kombinasi ini
             $existingMonitor = MonitorTc::where('id_tc', $tc->id_tc)
-                ->where('id_kriteria', $data['id_kriteria'])
-                ->whereDate('tgl_monitoring', $tgl_monitoring)
+                ->where('id_monitor', $data['id_monitor'])
                 ->first();
 
             if ($existingMonitor) {
                 // Update data yang sudah ada
                 $existingMonitor->update([
-                    'nilai_monitor' => $data['nilai_monitor'],
+                    'id_kriteria' => $data['id_kriteria'],
+                    'nilai_monitor' => $nilaiMonitor,
                     'evalusi_monitoring' => $data['evaluasi_monitoring'] ?? '',
+                    'tgl_monitoring' => $tgl_monitoring,
                     'updated_at' => now(),
                 ]);
 
@@ -661,21 +722,28 @@ class ProgramMonitoring extends Page implements HasForms
                     'id_user' => $user_id,
                     'id_tc' => $tc->id_tc,
                     'id_kriteria' => $data['id_kriteria'],
-                    'id_monitor' => $kriteria->id_monitor,
-                    'nilai_monitor' => $data['nilai_monitor'],
+                    'id_monitor' => $monitor->id_monitor,
+                    'nilai_monitor' => $nilaiMonitor,
                     'evalusi_monitoring' => $data['evaluasi_monitoring'] ?? '',
                     'tgl_monitoring' => $tgl_monitoring,
                     'ket_monitor' => '',
                     'tgl_update' => now()->format('Y-m-d'),
-                    'hasil' => '',
+                    'hasil' => null, // Akan dihitung setelah semua parameter dalam fase selesai
                 ]);
 
                 $message = 'Data Monitoring berhasil disimpan!';
             }
 
+            // HITUNG HASIL: Sum total nilai_monitor untuk satu fase
+            $this->calculateHasilPerFase($tc->id_tc, $data['fase_monitoring']);
+
             DB::commit();
 
             Notification::make()->title($message)->success()->send();
+
+            // Dispatch events untuk refresh widget
+            $this->dispatch('refreshMonitoringBiaya');
+            $this->dispatch('refreshMonitoringTeknis');
 
             // Reload reference data untuk update tabel
             $this->loadMonitoringReferenceData();
@@ -683,13 +751,16 @@ class ProgramMonitoring extends Page implements HasForms
             // Reload progress data untuk update stats
             $this->loadProgressData();
 
-            // Reset form input monitoring saja, biarkan TC detail tetap
-            $this->data['fase_monitoring'] = null;
+            // Reset hanya kriteria dan evaluasi, biarkan fase dan parameter tetap untuk input berikutnya
             $this->data['id_kriteria'] = null;
-            $this->data['nilai_monitor'] = null;
             $this->data['evaluasi_monitoring'] = null;
             $this->availableKriteria = [];
             $this->existingMonitorData = [];
+
+            // Reload kriteria untuk parameter yang sama
+            if (!empty($data['id_monitor'])) {
+                $this->loadKriteriaByMonitor($data['id_monitor']);
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Gagal menyimpan data monitoring:', [
@@ -705,6 +776,52 @@ class ProgramMonitoring extends Page implements HasForms
                 ->body('Error: ' . $e->getMessage())
                 ->danger()
                 ->send();
+        }
+    }
+
+    /**
+     * Hitung HASIL untuk satu fase monitoring
+     * HASIL = SUM(nilai_monitor) untuk semua parameter dalam satu fase
+     */
+    private function calculateHasilPerFase($idTc, $faseMonitoring): void
+    {
+        try {
+            // Ambil semua id_monitor yang termasuk dalam fase ini
+            $monitorIds = MstFasemonitor::where('fase_monitoring', $faseMonitoring)
+                ->pluck('id_monitor');
+
+            if ($monitorIds->isEmpty()) {
+                return;
+            }
+
+            // Ambil semua nilai_monitor dan hitung total secara manual karena kolom string
+            $records = MonitorTc::where('id_tc', $idTc)
+                ->whereIn('id_monitor', $monitorIds)
+                ->whereNotNull('nilai_monitor')
+                ->get();
+
+            // Convert ke float dan sum
+            $totalNilaiMonitor = $records->sum(function ($record) {
+                return floatval($record->nilai_monitor);
+            });
+
+            // Update semua record monitoring dalam fase ini dengan hasil yang sama
+            MonitorTc::where('id_tc', $idTc)
+                ->whereIn('id_monitor', $monitorIds)
+                ->update(['hasil' => $totalNilaiMonitor]);
+
+            Log::info('Hasil calculated for fase:', [
+                'fase' => $faseMonitoring,
+                'id_tc' => $idTc,
+                'total_nilai_monitor' => $totalNilaiMonitor,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to calculate hasil:', [
+                'error' => $e->getMessage(),
+                'id_tc' => $idTc,
+                'fase' => $faseMonitoring,
+            ]);
         }
     }
 

@@ -128,44 +128,61 @@
     {{-- Tabel Referensi --}}
     @if (!empty($this->data['trace_code']))
         <div class="mt-8 space-y-6">
-            <div class="text-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Tabel Referensi Monitoring</h2>
-                <p class="text-sm text-gray-600 mt-2">Data parameter monitoring untuk Trace Code:
-                    <strong>{{ $this->data['trace_code'] }}</strong>
-                </p>
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Tabel Data Monitoring</h2>
+                    <p class="text-sm text-gray-600 mt-2">Data parameter monitoring untuk Trace Code:
+                        <strong>{{ $this->data['trace_code'] }}</strong>
+                    </p>
+                </div>
+                <div>
+                    <x-filament::button wire:click="$dispatch('export-monitoring-pdf')" color="danger"
+                        icon="heroicon-o-document-arrow-down" size="lg">
+                        <span class="font-semibold">Export PDF (Biaya & Teknis)</span>
+                    </x-filament::button>
+                </div>
             </div>
 
-            {{-- History Monitoring dengan Filament Widget --}}
+            {{-- Monitoring Biaya --}}
             @if ($this->selectedTraceCode)
                 <x-filament::section>
                     <x-slot name="heading">
                         <div class="flex items-center justify-between w-full">
-                            <span class="text-xl font-bold text-gray-800">History Monitoring</span>
-                            <x-filament::button wire:click="$dispatch('export-history-data')" color="success"
-                                icon="heroicon-o-arrow-down-tray" size="sm">
-                                Export to Excel
-                            </x-filament::button>
+                            <span class="text-xl font-bold text-gray-800">Monitoring Biaya</span>
+                            <div class="flex gap-2">
+                                <x-filament::button wire:click="$dispatch('export-biaya-excel')" color="success"
+                                    icon="heroicon-o-arrow-down-tray" size="sm">
+                                    Export Excel
+                                </x-filament::button>
+                            </div>
                         </div>
                     </x-slot>
 
                     <div class="filament-tables-container">
-                        @livewire(\App\Filament\Widgets\HistoryMonitoringTable::class, ['traceCode' => $this->selectedTraceCode])
+                        @livewire(\App\Filament\Widgets\MonitoringBiayaTable::class, ['traceCode' => $this->selectedTraceCode])
                     </div>
                 </x-filament::section>
             @endif
 
-            {{-- Monitoring Biaya --}}
-            @if ($this->selectedTraceCode)
-                <div class="filament-tables-container">
-                    @livewire(\App\Filament\Widgets\MonitoringBiayaTable::class, ['traceCode' => $this->selectedTraceCode])
-                </div>
-            @endif
-
             {{-- Monitoring Teknis --}}
             @if ($this->selectedTraceCode)
-                <div class="filament-tables-container">
-                    @livewire(\App\Filament\Widgets\MonitoringTeknisTable::class, ['traceCode' => $this->selectedTraceCode])
-                </div>
+                <x-filament::section>
+                    <x-slot name="heading">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-xl font-bold text-gray-800">Monitoring Teknis</span>
+                            <div class="flex gap-2">
+                                <x-filament::button wire:click="$dispatch('export-teknis-excel')" color="success"
+                                    icon="heroicon-o-arrow-down-tray" size="sm">
+                                    Export Excel
+                                </x-filament::button>
+                            </div>
+                        </div>
+                    </x-slot>
+
+                    <div class="filament-tables-container">
+                        @livewire(\App\Filament\Widgets\MonitoringTeknisTable::class, ['traceCode' => $this->selectedTraceCode])
+                    </div>
+                </x-filament::section>
             @endif
         </div>
 
