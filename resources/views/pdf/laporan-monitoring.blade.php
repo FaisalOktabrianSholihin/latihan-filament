@@ -146,21 +146,21 @@
         </div>
     </div>
 
-    @if (count($dataBiaya) > 0)
-        <div class="section-title">Biaya</div>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 5%;">No</th>
-                    <th style="width: 25%;">Fase Monitoring</th>
-                    <th style="width: 30%;">Parameter</th>
-                    <th style="width: 10%;">Bobot</th>
-                    <th style="width: 10%;">Nilai Kriteria</th>
-                    <th style="width: 10%;">Nilai Monitor</th>
-                    <th style="width: 10%;">Hasil</th>
-                </tr>
-            </thead>
-            <tbody>
+    <div class="section-title">Biaya</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">No</th>
+                <th style="width: 25%;">Fase Monitoring</th>
+                <th style="width: 30%;">Parameter</th>
+                <th style="width: 10%;">Bobot</th>
+                <th style="width: 10%;">Nilai Kriteria</th>
+                <th style="width: 10%;">Nilai Monitor</th>
+                <th style="width: 10%;">Hasil</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (count($dataBiaya) > 0)
                 @foreach ($dataBiaya as $index => $item)
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
@@ -170,32 +170,36 @@
                             {{ $item->fasemonitoring->bobot ? number_format((float) $item->fasemonitoring->bobot, 2) : '-' }}
                         </td>
                         <td class="text-right">
-                            {{ $item->kriteria->nilai_kriteria ? number_format((float) $item->kriteria->nilai_kriteria, 2) : '-' }}
+                            {{ $item->kriteria && $item->kriteria->nilai_kriteria ? number_format((float) $item->kriteria->nilai_kriteria, 2) : '-' }}
                         </td>
                         <td class="text-right">
                             {{ $item->nilai_monitor ? number_format((float) $item->nilai_monitor, 2) : '-' }}</td>
                         <td class="text-right">{{ $item->hasil ? number_format((float) $item->hasil, 2) : '-' }}</td>
                     </tr>
                 @endforeach
-            </tbody>
-        </table>
-    @endif
-
-    @if (count($dataTeknis) > 0)
-        <div class="section-title">Teknis</div>
-        <table>
-            <thead>
+            @else
                 <tr>
-                    <th style="width: 5%;">No</th>
-                    <th style="width: 25%;">Fase Monitoring</th>
-                    <th style="width: 30%;">Parameter</th>
-                    <th style="width: 10%;">Bobot</th>
-                    <th style="width: 10%;">Nilai Kriteria</th>
-                    <th style="width: 10%;">Nilai Monitor</th>
-                    <th style="width: 10%;">Hasil</th>
+                    <td colspan="7" class="text-center" style="padding: 20px;">-</td>
                 </tr>
-            </thead>
-            <tbody>
+            @endif
+        </tbody>
+    </table>
+
+    <div class="section-title">Teknis</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">No</th>
+                <th style="width: 25%;">Fase Monitoring</th>
+                <th style="width: 30%;">Parameter</th>
+                <th style="width: 10%;">Bobot</th>
+                <th style="width: 10%;">Nilai Kriteria</th>
+                <th style="width: 10%;">Nilai Monitor</th>
+                <th style="width: 10%;">Hasil</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (count($dataTeknis) > 0)
                 @foreach ($dataTeknis as $index => $item)
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
@@ -205,16 +209,20 @@
                             {{ $item->fasemonitoring->bobot ? number_format((float) $item->fasemonitoring->bobot, 2) : '-' }}
                         </td>
                         <td class="text-right">
-                            {{ $item->kriteria->nilai_kriteria ? number_format((float) $item->kriteria->nilai_kriteria, 2) : '-' }}
+                            {{ $item->kriteria && $item->kriteria->nilai_kriteria ? number_format((float) $item->kriteria->nilai_kriteria, 2) : '-' }}
                         </td>
                         <td class="text-right">
                             {{ $item->nilai_monitor ? number_format((float) $item->nilai_monitor, 2) : '-' }}</td>
                         <td class="text-right">{{ $item->hasil ? number_format((float) $item->hasil, 2) : '-' }}</td>
                     </tr>
                 @endforeach
-            </tbody>
-        </table>
-    @endif
+            @else
+                <tr>
+                    <td colspan="7" class="text-center" style="padding: 20px;">-</td>
+                </tr>
+            @endif
+        </tbody>
+    </table>
 
     <div class="footer">
         <p>Dicetak pada: {{ now()->format('d F Y H:i') }}</p>

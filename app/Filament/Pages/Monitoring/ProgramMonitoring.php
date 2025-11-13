@@ -90,23 +90,21 @@ class ProgramMonitoring extends Page implements HasForms
             return;
         }
 
-        // Ambil data Biaya
+        // Ambil data Biaya (semua, termasuk yang belum diisi)
         $dataBiaya = MonitorTc::with(['fasemonitoring', 'kriteria'])
             ->where('id_tc', $tc->id_tc)
             ->whereHas('fasemonitoring', function($query) {
                 $query->where('grub_fasemonitor', 'Biaya');
             })
-            ->whereNotNull('nilai_monitor')
             ->orderBy('id_monitor')
             ->get();
 
-        // Ambil data Teknis
+        // Ambil data Teknis (semua, termasuk yang belum diisi)
         $dataTeknis = MonitorTc::with(['fasemonitoring', 'kriteria'])
             ->where('id_tc', $tc->id_tc)
             ->whereHas('fasemonitoring', function($query) {
                 $query->where('grub_fasemonitor', 'Teknis');
             })
-            ->whereNotNull('nilai_monitor')
             ->orderBy('id_monitor')
             ->get();
 
