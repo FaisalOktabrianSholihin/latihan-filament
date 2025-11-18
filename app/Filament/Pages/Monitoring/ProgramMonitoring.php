@@ -46,8 +46,16 @@ class ProgramMonitoring extends Page implements HasForms
 
     public function mount(): void
     {
+        if (!auth()->user()?->can('View:ProgramMonitoring')) {
+        abort(403);
+        }
         $this->form->fill();
         $this->loadProgressData();
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->user()?->can('View:ProgramMonitoring');
     }
 
     protected function getHeaderWidgets(): array

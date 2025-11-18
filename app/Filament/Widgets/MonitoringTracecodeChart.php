@@ -14,6 +14,11 @@ class MonitoringTracecodeChart extends ChartWidget
 
     protected int | string | array $columnSpan = 1;
 
+    public static function canView(): bool
+    {
+        return auth()->user()?->can('View:MonitoringTracecodeChart') ?? false;
+    }
+
     protected function getData(): array
     {
         // Hitung TC yang sudah selesai monitoring (status sudah dan ada data monitoring)

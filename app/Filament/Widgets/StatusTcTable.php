@@ -16,6 +16,11 @@ class StatusTcTable extends BaseWidget
 
     protected int | string | array $columnSpan = 1;
 
+    public static function canView(): bool
+    {
+        return auth()->user()?->can('View:StatusTcTable') ?? false;
+    }
+
     public function table(Table $table): Table
     {
         return $table
