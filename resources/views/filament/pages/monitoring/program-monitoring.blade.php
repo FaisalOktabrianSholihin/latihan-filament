@@ -79,7 +79,7 @@
             <p><span class="font-semibold text-blue-600">4.</span> Pilih <strong>Parameter dan Kriteria
                     Monitoring</strong> yang
                 tersedia</p>
-            <p><span class="font-semibold text-blue-600">5.</span> Input <strong>Nilai Monitoring</strong> dan evaluasi
+            <p><span class="font-semibold text-blue-600">5.</span> Input <strong>Evaluasi Monitoring</strong>
             </p>
             <p><span class="font-semibold text-blue-600">6.</span> Klik <strong>Simpan</strong> untuk menyimpan data</p>
         </div>
@@ -101,10 +101,10 @@
                 Reset Form
             </x-filament::button>
 
-            <x-filament::button wire:click="testConnection" color="info" outlined size="lg"
+            {{-- <x-filament::button wire:click="testConnection" color="info" outlined size="lg"
                 icon="heroicon-o-wrench-screwdriver">
                 Test DB
-            </x-filament::button>
+            </x-filament::button> --}}
         </div>
     </form>
 
@@ -131,7 +131,7 @@
             <div class="flex items-center justify-between mb-6">
                 <div>
                     <h2 class="text-2xl font-bold text-gray-800">Tabel Data Monitoring</h2>
-                    <p class="text-sm text-gray-600 mt-2">Data parameter monitoring untuk Trace Code:
+                    <p class="text-sm text-gray-600 mt-2">Data parameter monitoring untuk Tracecode:
                         <strong>{{ $this->data['trace_code'] }}</strong>
                     </p>
                 </div>

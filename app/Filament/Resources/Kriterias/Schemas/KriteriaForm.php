@@ -14,8 +14,8 @@ class KriteriaForm
         return $schema
             ->components([
                 Select::make('id_monitor')
-                    ->label('Fase Monitoring')
-                    ->relationship('mstfasemonitoring', 'fase_monitoring')
+                    ->label('Parameter')
+                    ->relationship('mstfasemonitoring', 'parameter')
                     ->searchable()
                     ->preload()
                     ->required(),

@@ -3,7 +3,7 @@
 
 <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
     <div class="px-5 py-4 border-b border-gray-100">
-        <h2 class="text-sm font-semibold text-gray-700 tracking-wide">Informasi Trace Code</h2>
+        <h2 class="text-sm font-semibold text-gray-700 tracking-wide">Informasi Tracecode</h2>
     </div>
     <div class="px-5 py-5">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-4">

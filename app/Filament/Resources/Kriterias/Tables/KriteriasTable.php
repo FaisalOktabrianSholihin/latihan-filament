@@ -23,6 +23,10 @@ class KriteriasTable
                     ->label('Fase Monitoring')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('mstfasemonitoring.parameter')
+                    ->label('Parameter')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('nm_kriteria')
                     ->label('Nama Kriteria')
                     ->searchable()

@@ -28,6 +28,10 @@ class MstFasemonitorForm
                     ->label('Titik Kritis')
                     ->required()
                     ->maxLength(255),
+                TextInput::make('bobot')
+                    ->label('Bobot')
+                    ->required()
+                    ->maxLength(255),
                 Textarea::make('monitoring_poin')
                     ->label('Monitoring Poin')
                     ->required()

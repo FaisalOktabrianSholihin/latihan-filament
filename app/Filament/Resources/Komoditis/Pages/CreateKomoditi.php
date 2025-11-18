@@ -8,4 +8,11 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateKomoditi extends CreateRecord
 {
     protected static string $resource = KomoditiResource::class;
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction(),
+            $this->getCancelFormAction(),
+        ];
+    }
 }

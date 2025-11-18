@@ -49,6 +49,10 @@ class TcsTable
                     ->label('Wilayah')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('jumlah_bedeng')
+                    ->label('Jumlah Bedeng')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d/m/Y H:i')

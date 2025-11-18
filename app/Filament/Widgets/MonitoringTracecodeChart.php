@@ -56,8 +56,8 @@ class MonitoringTracecodeChart extends ChartWidget
                 ],
             ],
             'labels' => [
-                "Toko TC Sudah Selesai ({$persenSudah}%)",
-                "Toko TC Perlu Tindakan ({$persenPerlu}%)",
+                "TC Sudah Selesai ({$persenSudah}%)",
+                "TC Perlu Tindakan ({$persenPerlu}%)",
             ],
         ];
     }

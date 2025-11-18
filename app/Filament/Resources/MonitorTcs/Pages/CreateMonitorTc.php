@@ -8,4 +8,11 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateMonitorTc extends CreateRecord
 {
     protected static string $resource = MonitorTcResource::class;
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction(),
+            $this->getCancelFormAction(),
+        ];
+    }
 }
