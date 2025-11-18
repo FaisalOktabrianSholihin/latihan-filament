@@ -8,4 +8,11 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateBudidaya extends CreateRecord
 {
     protected static string $resource = BudidayaResource::class;
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction(),
+            $this->getCancelFormAction(),
+        ];
+    }
 }

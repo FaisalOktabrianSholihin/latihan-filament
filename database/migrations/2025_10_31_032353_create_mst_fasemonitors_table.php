@@ -23,8 +23,8 @@ return new class extends Migration
             $table->string('monitoring_poin');
             $table->string('bobot');
             $table->string('keterangan');
-            $table->string('field1');
-            $table->string('field2');
+            // $table->string('field1');
+            // $table->string('field2');
             $table->timestamps();
         });
     }

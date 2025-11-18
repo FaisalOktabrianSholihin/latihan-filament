@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('tcs', function (Blueprint $table) {
             // $table->id();
-            $table->unsignedBigInteger('id_tc')->primary(); // bisa diisi
+            $table->unsignedBigInteger('id_tc')->primary(); 
             $table->string('tracecode');
             $table->date('tgl_tanam');
             $table->string('luas_tanam');

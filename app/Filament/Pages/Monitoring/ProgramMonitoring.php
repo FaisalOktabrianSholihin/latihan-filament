@@ -93,7 +93,7 @@ class ProgramMonitoring extends Page implements HasForms
         // Ambil data Biaya (semua, termasuk yang belum diisi)
         $dataBiaya = MonitorTc::with(['fasemonitoring', 'kriteria'])
             ->where('id_tc', $tc->id_tc)
-            ->whereHas('fasemonitoring', function($query) {
+            ->whereHas('fasemonitoring', function ($query) {
                 $query->where('grub_fasemonitor', 'Biaya');
             })
             ->orderBy('id_monitor')
@@ -102,7 +102,7 @@ class ProgramMonitoring extends Page implements HasForms
         // Ambil data Teknis (semua, termasuk yang belum diisi)
         $dataTeknis = MonitorTc::with(['fasemonitoring', 'kriteria'])
             ->where('id_tc', $tc->id_tc)
-            ->whereHas('fasemonitoring', function($query) {
+            ->whereHas('fasemonitoring', function ($query) {
                 $query->where('grub_fasemonitor', 'Teknis');
             })
             ->orderBy('id_monitor')
@@ -114,7 +114,7 @@ class ProgramMonitoring extends Page implements HasForms
             'dataTeknis' => $dataTeknis
         ]);
 
-        return response()->streamDownload(function() use ($pdf) {
+        return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, 'Laporan-Monitoring-' . $this->selectedTraceCode . '.pdf');
     }
@@ -158,7 +158,7 @@ class ProgramMonitoring extends Page implements HasForms
                                     ->columnSpan(1),
 
                                 Select::make('trace_code')
-                                    ->label('Kode Traceability')
+                                    ->label('Tracecode')
                                     ->options(function () {
                                         return Tc::with(['komoditi', 'budidaya'])
                                             ->get()
@@ -426,7 +426,6 @@ class ProgramMonitoring extends Page implements HasForms
                 ->body('35 fase monitoring telah dibuat untuk TC: ' . $traceCode)
                 ->success()
                 ->send();
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to generate monitoring records:', [
@@ -679,9 +678,20 @@ class ProgramMonitoring extends Page implements HasForms
 
             // HITUNG NILAI_MONITOR: bobot (dari mst_fasemonitor) × nilai_kriteria (dari kriteria)
             // Convert to float untuk memastikan perhitungan numerik yang benar
-            $bobot = floatval($monitor->bobot ?? 0);
-            $nilaiKriteria = floatval($kriteria->nilai_kriteria ?? 0);
-            $nilaiMonitor = $bobot * $nilaiKriteria;
+            // $bobot = floatval($monitor->bobot ?? 0);
+            // $nilaiKriteria = floatval($kriteria->nilai_kriteria ?? 0);
+            // $nilaiMonitor = $bobot * $nilaiKriteria;
+
+            // Log::info('Calculating nilai_monitor:', [
+            //     'bobot' => $bobot,
+            //     'nilai_kriteria' => $nilaiKriteria,
+            //     'nilai_monitor' => $nilaiMonitor,
+            // ]);
+            $bobot = floatval($monitor->bobot ?? 0); // contoh: 20
+            $nilaiKriteria = floatval($kriteria->nilai_kriteria ?? 0); // contoh: 80
+
+            // konversi bobot persen ke bentuk desimal
+            $nilaiMonitor = ($bobot / 100) * $nilaiKriteria; // 20/100 * 80 = 16
 
             Log::info('Calculating nilai_monitor:', [
                 'bobot' => $bobot,
@@ -813,7 +823,6 @@ class ProgramMonitoring extends Page implements HasForms
                 'id_tc' => $idTc,
                 'total_nilai_monitor' => $totalNilaiMonitor,
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to calculate hasil:', [
                 'error' => $e->getMessage(),

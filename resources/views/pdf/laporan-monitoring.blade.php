@@ -114,7 +114,8 @@
 <body>
     <div class="header">
         <h1>Laporan Hasil Monitoring</h1>
-        <p>by (Kaling Aktif)</p>
+        {{-- <p>by (Kaling Aktif)</p> --}}
+        <p>Dicetak pada: {{ now()->format('d F Y H:i') }}</p>
     </div>
 
     <div class="info-section">
@@ -141,8 +142,8 @@
         <div class="info-row">
             <div class="info-label">Jumlah Bedeng:</div>
             <div class="info-value">{{ $tc->jumlah_bedeng ?? '-' }}</div>
-            <div class="info-label">Budidaya:</div>
-            <div class="info-value">{{ $tc->budidaya->nm_budidaya ?? '-' }}</div>
+            <div class="info-label">Asman/Manager:</div>
+            <div class="info-value">{{ $tc->budidaya->nm_asman_manager ?? '-' }}</div>
         </div>
     </div>
 
@@ -221,6 +222,94 @@
                     <td colspan="7" class="text-center" style="padding: 20px;">-</td>
                 </tr>
             @endif
+        </tbody>
+    </table>
+
+    <div class="section-title">Hasil Teknis</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">No</th>
+                <th style="width: 25%;">Fase Monitoring</th>
+                <th style="width: 15%;">Hasil</th>
+                <th style="width: 15%;">Kriteria</th>
+                <th style="width: 15%;">Produktivitas</th>
+                {{-- <th style="width: 10%;">Nilai Monitor</th>
+                <th style="width: 10%;">Hasil</th> --}}
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $faseSudahDitampilkan = [];
+                $nomor = 1;
+            @endphp
+            @foreach ($dataTeknis as $item)
+                @php
+                    $fase = $item->fasemonitoring->fase_monitoring ?? '-';
+
+                    // Jika fase sudah muncul, skip baris ini
+                    if (in_array($fase, $faseSudahDitampilkan)) {
+                        continue;
+                    }
+
+                    $faseSudahDitampilkan[] = $fase;
+
+                    // Hitung kriteria berdasarkan hasil
+                    $hasil = (float) ($item->hasil ?? 0);
+
+                    if ($hasil >= 85 && $hasil <= 90) {
+                        $kriteria = 'Sangat Baik';
+                    } elseif ($hasil >= 80 && $hasil < 85) {
+                        $kriteria = 'Baik';
+                    } elseif ($hasil >= 70 && $hasil < 80) {
+                        $kriteria = 'Cukup';
+                    } elseif ($hasil >= 60 && $hasil < 70) {
+                        $kriteria = 'Kurang';
+                    } elseif ($hasil >= 50 && $hasil < 60) {
+                        $kriteria = 'Jelek';
+                    } elseif ($hasil >= 10 && $hasil < 50) {
+                        $kriteria = '-';
+                    } else {
+                        $kriteria = 'Belum Termonitor';
+                    }
+
+                    // Tentukan Produktivitas berdasarkan Kriteria
+                    switch ($kriteria) {
+                        case 'Sangat Baik':
+                            $produktivitas = '> 10000';
+                            break;
+
+                        case 'Baik':
+                        case 'Cukup':
+                            $produktivitas = '9000 - 9500';
+                            break;
+
+                        case 'Kurang':
+                            $produktivitas = '8000 - 9000';
+                            break;
+
+                        case 'Jelek':
+                            $produktivitas = '< 8000';
+                            break;
+
+                        default:
+                            $produktivitas = '-';
+                    }
+                @endphp
+
+                <tr>
+                    <td class="text-center">{{ $nomor }}</td>
+                    <td>{{ $fase }}</td>
+                    <td class="text-right">
+                        {{ $item->hasil ? number_format((float) $item->hasil, 2) : '-' }}
+                    </td>
+                    <td class="text-right">{{ $kriteria }}</td>
+                    <td class="text-right">{{ $produktivitas }}</td>
+                </tr>
+
+                @php $nomor++; @endphp
+            @endforeach
+
         </tbody>
     </table>
 

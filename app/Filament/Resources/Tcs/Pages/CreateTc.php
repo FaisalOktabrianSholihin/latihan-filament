@@ -8,4 +8,11 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateTc extends CreateRecord
 {
     protected static string $resource = TcResource::class;
+    protected function getFormActions(): array
+    {
+        return [
+            $this->getCreateFormAction(),
+            $this->getCancelFormAction(),
+        ];
+    }
 }

@@ -42,6 +42,7 @@ class MonitoringBiayaTable extends BaseWidget
             ->with(['fasemonitoring', 'kriteria', 'user'])
             ->where('id_tc', $tc->id_tc)
             ->whereIn('id_monitor', $biayaMonitorIds)
+            ->orderBy('id_monitor', 'asc')
             ->orderBy('tgl_monitoring', 'desc');
     }
 
@@ -81,7 +82,7 @@ class MonitoringBiayaTable extends BaseWidget
                     ->color('primary')
                     ->placeholder('-')
                     ->default('-')
-                    ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 2) : '-'),
+                    ->formatStateUsing(fn($state) => $state ? number_format((float)$state, 2) : '-'),
                 Tables\Columns\TextColumn::make('evalusi_monitoring')
                     ->label('Evaluasi')
                     ->wrap()
@@ -99,7 +100,7 @@ class MonitoringBiayaTable extends BaseWidget
                     ->color('warning')
                     ->placeholder('-')
                     ->default('-')
-                    ->formatStateUsing(fn ($state) => $state ? number_format((float)$state, 2) : '-'),
+                    ->formatStateUsing(fn($state) => $state ? number_format((float)$state, 2) : '-'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('fase_monitoring')
@@ -148,9 +149,9 @@ class MonitoringBiayaTable extends BaseWidget
             'Expires' => '0',
         ];
 
-        $callback = function() use ($records) {
+        $callback = function () use ($records) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
             fputcsv($file, [
                 'Trace Code',
