@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\MonitorTcs\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ExportAction;
@@ -69,7 +70,7 @@ class MonitorTcsTable
                 TextColumn::make('hasil')
                     ->label('Hasil')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Sesuai' => 'success',
                         'Tidak Sesuai' => 'danger',
                         'Perlu Perbaikan' => 'warning',
@@ -122,16 +123,17 @@ class MonitorTcsTable
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('tgl_monitoring', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('tgl_monitoring', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('tgl_monitoring', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('tgl_monitoring', '<=', $date),
                             );
                     }),
             ])
             ->recordActions([
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

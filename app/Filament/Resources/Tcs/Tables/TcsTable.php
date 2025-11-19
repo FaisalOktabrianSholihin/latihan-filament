@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Tcs\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -28,7 +29,7 @@ class TcsTable
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('budidaya.nm_asman_manager')
-                    ->label('Penanggung Jawab')
+                    ->label('Asman')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('tgl_tanam')
@@ -69,6 +70,7 @@ class TcsTable
             ])
             ->recordActions([
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

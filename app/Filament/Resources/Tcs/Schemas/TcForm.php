@@ -8,6 +8,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
 
+
 class TcForm
 {
     public static function configure(Schema $schema): Schema
@@ -50,37 +51,45 @@ class TcForm
             //         fn($state, callable $set, callable $get) =>
             //         self::generateTraceCode($set, $get)
             //     ),
-            Select::make('manager_id')
-                ->label('Manager')
+
+            Select::make('filter_manager')
+                ->label('Pilih Manager (Atasan)')
                 ->options(
-                    Budidaya::whereNull('id_atasan')
-                        ->pluck('nm_asman_manager', 'id_budidaya')
+                    fn() => Budidaya::query()
+                        // Asumsi: Manager adalah yang kolom id_atasan-nya NULL atau Kosong
+                        // Sesuaikan logika ini dengan data Anda. 
+                        // Jika Manager juga punya atasan (Direktur), logic ini perlu disesuaikan.
+                        ->whereNull('id_atasan')
+                        ->orWhere('id_atasan', '')
+                        ->pluck('nm_asman_manager', 'id_asman_manager') // Value-nya Kode Asman (misal '013')
                 )
                 ->searchable()
-                ->required()
-                ->reactive()
-                ->afterStateUpdated(function ($state, callable $set) {
-                    // Reset field Asman setiap kali Manager berubah
-                    $set('asman_id', null);
+                ->preload()
+                ->live() // Gunakan live() agar reaktif real-time (di v3)
+                ->dehydrated(false) // PENTING: Agar tidak error "column not found" saat save
+                ->afterStateUpdated(function (callable $set) { // Ubah Set jadi callable
+                    $set('id_budidaya', null);
                 }),
 
-            Select::make('asman_id')
-                ->label('Asman')
+            // 2. PILIH ASMAN (Penanggung Jawab)
+            // Ini yang akan disimpan ke database sebagai 'id_budidaya'
+            Select::make('id_budidaya')
+                ->label('Penanggung Jawab (Asman)')
                 ->options(function (callable $get) {
-                    $managerId = $get('manager_id');
+                    $managerCode = $get('filter_manager');
 
-                    if (! $managerId) {
-                        return [];
+                    if (! $managerCode) {
+                        return []; // Kosongkan jika Manager belum dipilih
                     }
 
-                    // Ambil anak yang id_atasan = manager_id
-                    return Budidaya::where('id_atasan', $managerId)
-                        ->pluck('nm_asman_manager', 'id_budidaya');
+                    // Cari bawahan (Asman) yang id_atasan-nya sesuai kode manager di atas
+                    return Budidaya::where('id_atasan', $managerCode)
+                        ->pluck('nm_asman_manager', 'id_budidaya'); // Value-nya PK (id_budidaya) untuk disimpan
                 })
                 ->searchable()
+                ->preload()
                 ->required()
-                ->reactive()
-                ->hidden(fn(callable $get) => $get('manager_id') === null) // Muncul setelah Manager dipilih
+                ->reactive() // Tetap reactive untuk trigger generateTraceCode
                 ->afterStateUpdated(
                     fn($state, callable $set, callable $get) =>
                     self::generateTraceCode($set, $get)
@@ -147,6 +156,7 @@ class TcForm
         $budidaya = Budidaya::find($idBudidaya);
         $idAsmanManager = $budidaya?->id_asman_manager ?? '000';
 
+
         // Ambil dua digit tahun & tentukan kategori bulan
         $year = date('y', strtotime($tanggal));
         $month = date('n', strtotime($tanggal));
@@ -168,21 +178,58 @@ class TcForm
 
 
     // === Fungsi generate TDK TC otomatis ===
+    // protected static function generateTdkTc(callable $set, $tanggal): void
+    // {
+    //     if (! $tanggal) {
+    //         return;
+    //     }
+
+    //     $month = date('n', strtotime($tanggal));
+    //     $kategori = match (true) {
+    //         $month >= 1 && $month <= 4 => 'A',
+    //         $month >= 5 && $month <= 8 => 'B',
+    //         default => 'C',
+    //     };
+
+    //     // Format: bulan dua digit + kategori
+    //     $tdkTc = str_pad($month, 2, '0', STR_PAD_LEFT) . strtoupper($kategori);
+
+    //     $set('tdk_tc', $tdkTc);
+    // }
     protected static function generateTdkTc(callable $set, $tanggal): void
     {
         if (! $tanggal) {
             return;
         }
 
-        $month = date('n', strtotime($tanggal));
+        $time = strtotime($tanggal);
+        $month = date('n', $time);
+        $day = date('j', $time);
+
+        // Jumlah hari dalam bulan tersebut
+        $totalDays = cal_days_in_month(CAL_GREGORIAN, $month, date('Y', $time));
+
+        // Tentukan batas segmen
+        $segment = intdiv($totalDays, 3); // Pembagian dasar
+        $sisa = $totalDays % 3; // Untuk menangani bulan yang tidak habis dibagi 3
+
+        // Tentukan batas segmen A, B, C
+        $endA = $segment;
+        $endB = $segment * 2;
+
+        // Jika ada sisa hari, tambahkan 1 hari ke segmen awal
+        if ($sisa >= 1) $endA++;
+        if ($sisa == 2) $endB++;
+
+        // Tentukan kategori berdasarkan tanggal
         $kategori = match (true) {
-            $month >= 1 && $month <= 4 => 'A',
-            $month >= 5 && $month <= 8 => 'B',
+            $day <= $endA => 'A',
+            $day <= $endB => 'B',
             default => 'C',
         };
 
-        // Format: bulan dua digit + kategori
-        $tdkTc = str_pad($month, 2, '0', STR_PAD_LEFT) . strtoupper($kategori);
+        // Format: dua digit bulan + kategori
+        $tdkTc = str_pad($month, 2, '0', STR_PAD_LEFT) . $kategori;
 
         $set('tdk_tc', $tdkTc);
     }

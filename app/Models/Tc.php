@@ -11,12 +11,8 @@ class Tc extends Model
 
     protected $table = 'tcs';
     protected $primaryKey = 'id_tc';
-    // PENTING: Matikan auto-increment dan set keyType ke integer
-    public $incrementing = false;
-    protected $keyType = 'int';
 
     protected $fillable = [
-        'id_tc',
         'tracecode',
         'id_komoditi',
         'id_budidaya',

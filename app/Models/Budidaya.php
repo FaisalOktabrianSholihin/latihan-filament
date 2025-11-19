@@ -12,11 +12,7 @@ class Budidaya extends Model
 
     protected $table = 'budidayas';
     protected $primaryKey = 'id_budidaya';
-    public $incrementing = false;
-    protected $keyType = 'int';
-
     protected $fillable = [
-        'id_budidaya',
         'id_asman_manager',
         'nm_asman_manager',
         'id_atasan',
@@ -46,7 +42,7 @@ class Budidaya extends Model
 
         return Attribute::make(
             // Fungsi 'get' mengambil kode dari kolom 'id_atasan' dan mengembalikannya sebagai nama
-            get: fn(mixed $value, array $attributes) => $lookup[$attributes['id_atasan']] ?? 'Tidak Diketahui',
+            get: fn(mixed $value, array $attributes) => $lookup[$attributes['id_atasan']] ?? '',
         );
     }
 }

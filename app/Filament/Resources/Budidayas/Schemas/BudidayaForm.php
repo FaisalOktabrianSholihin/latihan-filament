@@ -12,12 +12,12 @@ class BudidayaForm
     {
         return $schema
             ->components([
-                TextInput::make('id_budidaya')
-                    ->label('ID Budidaya')
-                    ->required()
-                    ->numeric()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(10),
+                // TextInput::make('id_budidaya')
+                //     ->label('ID Budidaya')
+                //     ->required()
+                //     ->numeric()
+                //     ->unique(ignoreRecord: true)
+                //     ->maxLength(10),
                 TextInput::make('id_asman_manager')
                     ->label('ID Asman/Manager')
                     ->required()
